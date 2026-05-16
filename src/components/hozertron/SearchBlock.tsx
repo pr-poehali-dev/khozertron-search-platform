@@ -27,6 +27,7 @@ interface SearchBlockProps {
   fileInputRef: React.RefObject<HTMLInputElement>;
   toggleVoice: () => void;
   handleImageClick: () => void;
+  onSearch?: () => void;
 }
 
 export default function SearchBlock({
@@ -46,6 +47,7 @@ export default function SearchBlock({
   fileInputRef,
   toggleVoice,
   handleImageClick,
+  onSearch,
 }: SearchBlockProps) {
   return (
     <div className="w-full max-w-2xl animate-fade-in" style={{ animationDelay: "0.1s" }}>
@@ -116,7 +118,7 @@ export default function SearchBlock({
               }
               className="flex-1 bg-transparent outline-none text-base font-medium placeholder:font-normal"
               style={{ color: "hsl(var(--foreground))" }}
-              onKeyDown={(e) => e.key === "Enter" && setShowFilters(true)}
+              onKeyDown={(e) => e.key === "Enter" && onSearch?.()}
             />
 
             <div className="flex items-center gap-1">
@@ -158,6 +160,7 @@ export default function SearchBlock({
 
               {/* Поиск */}
               <button
+                onClick={onSearch}
                 className="ml-1 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:scale-105 hover:brightness-110"
                 style={{ background: "hsl(var(--accent))", color: "hsl(var(--accent-foreground))" }}
               >

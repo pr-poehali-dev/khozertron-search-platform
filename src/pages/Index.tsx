@@ -1,10 +1,12 @@
 import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "@/components/hozertron/Header";
 import SearchBlock from "@/components/hozertron/SearchBlock";
 import QuickAccess from "@/components/hozertron/QuickAccess";
 import { Theme, SearchMode, ContentType, DateFilter } from "@/components/hozertron/types";
 
 export default function Index() {
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [searchMode, setSearchMode] = useState<SearchMode>("text");
   const [contentType, setContentType] = useState<ContentType>("all");
@@ -40,6 +42,12 @@ export default function Index() {
     setShowProfile(false);
     setShowNotifications(false);
     setShowService(false);
+  };
+
+  const handleSearch = () => {
+    if (query.trim()) {
+      navigate(`/search?q=${encodeURIComponent(query.trim())}&type=${contentType}`);
+    }
   };
 
   return (
@@ -106,6 +114,7 @@ export default function Index() {
           fileInputRef={fileInputRef}
           toggleVoice={toggleVoice}
           handleImageClick={handleImageClick}
+          onSearch={handleSearch}
         />
 
         <QuickAccess />
