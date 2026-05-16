@@ -92,6 +92,9 @@ def _fetch_steam_app(appid: int):
         release = d.get('release_date', {}).get('date', '') or ''
         year_match = re.search(r'(\d{4})', release)
         year = int(year_match.group(1)) if year_match else None
+        screenshots_raw = d.get('screenshots') or []
+        screenshots = '|'.join([s.get('path_full', '') for s in screenshots_raw if s.get('path_full')][:10])
+        metacritic = d.get('metacritic', {}).get('score') if d.get('metacritic') else None
         return {
             'steam_appid': appid,
             'title': d.get('name') or f'Steam App {appid}',
@@ -104,7 +107,11 @@ def _fetch_steam_app(appid: int):
             'publisher': ', '.join(d.get('publishers') or []) or None,
             'price': price,
             'is_free': is_free,
-            'tags': tags
+            'tags': tags,
+            'screenshots': screenshots,
+            'background': d.get('background_raw') or d.get('background') or '',
+            'website': d.get('website') or f'https://store.steampowered.com/app/{appid}/',
+            'metacritic': metacritic
         }
     except (urllib.error.URLError, urllib.error.HTTPError, ValueError, TimeoutError, KeyError):
         return None
@@ -128,7 +135,11 @@ def _upsert_game(cur, g: dict):
         'price': g.get('price') or 0,
         'is_free': bool(g.get('is_free')),
         'is_hot': bool(g.get('is_hot')),
-        'tags': g.get('tags') or ''
+        'tags': g.get('tags') or '',
+        'screenshots': g.get('screenshots') or '',
+        'background': g.get('background') or '',
+        'website': g.get('website') or '',
+        'metacritic': g.get('metacritic')
     }
 
     def v(val):
@@ -141,13 +152,15 @@ def _upsert_game(cur, g: dict):
         return f"'{_esc(val)}'"
 
     cur.execute(f"""
-        INSERT INTO games (steam_appid, title, slug, genre, platforms, rating, year, players, img, description, developer, publisher, price, is_free, is_hot, tags, updated_at)
-        VALUES ({v(fields['steam_appid'])}, {v(fields['title'])}, {v(fields['slug'])}, {v(fields['genre'])}, {v(fields['platforms'])}, {v(fields['rating'])}, {v(fields['year'])}, {v(fields['players'])}, {v(fields['img'])}, {v(fields['description'])}, {v(fields['developer'])}, {v(fields['publisher'])}, {v(fields['price'])}, {v(fields['is_free'])}, {v(fields['is_hot'])}, {v(fields['tags'])}, NOW())
+        INSERT INTO games (steam_appid, title, slug, genre, platforms, rating, year, players, img, description, developer, publisher, price, is_free, is_hot, tags, screenshots, background, website, metacritic, updated_at)
+        VALUES ({v(fields['steam_appid'])}, {v(fields['title'])}, {v(fields['slug'])}, {v(fields['genre'])}, {v(fields['platforms'])}, {v(fields['rating'])}, {v(fields['year'])}, {v(fields['players'])}, {v(fields['img'])}, {v(fields['description'])}, {v(fields['developer'])}, {v(fields['publisher'])}, {v(fields['price'])}, {v(fields['is_free'])}, {v(fields['is_hot'])}, {v(fields['tags'])}, {v(fields['screenshots'])}, {v(fields['background'])}, {v(fields['website'])}, {v(fields['metacritic'])}, NOW())
         ON CONFLICT (steam_appid) DO UPDATE SET
             title = EXCLUDED.title, genre = EXCLUDED.genre, platforms = EXCLUDED.platforms,
             year = EXCLUDED.year, img = EXCLUDED.img, description = EXCLUDED.description,
             developer = EXCLUDED.developer, publisher = EXCLUDED.publisher,
             price = EXCLUDED.price, is_free = EXCLUDED.is_free, tags = EXCLUDED.tags,
+            screenshots = EXCLUDED.screenshots, background = EXCLUDED.background,
+            website = EXCLUDED.website, metacritic = EXCLUDED.metacritic,
             updated_at = NOW()
         RETURNING id
     """)

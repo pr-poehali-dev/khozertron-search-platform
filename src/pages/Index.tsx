@@ -15,6 +15,7 @@ const navItems = [
 
 type Game = {
   id: number;
+  slug: string;
   title: string;
   genre: string;
   platforms: string[];
@@ -178,9 +179,9 @@ const Index = () => {
                 <div className="absolute top-full left-0 right-0 mt-2 bg-card/95 backdrop-blur-xl border border-border rounded-xl overflow-hidden z-50 animate-fade-in">
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground px-4 pt-3 pb-1">Подсказки</div>
                   {suggestions.map((s) => (
-                    <button
+                    <Link
                       key={s.id}
-                      onMouseDown={() => setQuery(s.title)}
+                      to={`/game/${s.slug}`}
                       className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-secondary text-left"
                     >
                       <img src={s.img} alt="" className="w-10 h-10 rounded-md object-cover" />
@@ -192,7 +193,7 @@ const Index = () => {
                         <Icon name="Star" size={11} className="fill-primary" />
                         {s.rating}
                       </div>
-                    </button>
+                    </Link>
                   ))}
                 </div>
               )}
@@ -321,7 +322,7 @@ const Index = () => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 {games.map((game) => (
-                  <article key={game.id} className="group bg-card/60 border border-border rounded-xl overflow-hidden hover:border-primary/60 transition-all cursor-pointer">
+                  <Link to={`/game/${game.slug}`} key={game.id} className="group bg-card/60 border border-border rounded-xl overflow-hidden hover:border-primary/60 transition-all cursor-pointer block">
                     <div className="relative h-44 overflow-hidden">
                       {game.img ? (
                         <img src={game.img} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
@@ -365,13 +366,13 @@ const Index = () => {
                             <span key={p} className="px-1.5 py-0.5 rounded bg-secondary text-[9px] uppercase tracking-wider font-semibold">{p}</span>
                           ))}
                         </div>
-                        <button className="px-3 py-1.5 bg-primary/15 text-primary border border-primary/30 rounded-lg text-xs font-bold flex items-center gap-1 hover:bg-primary hover:text-primary-foreground transition-colors">
+                        <span className="px-3 py-1.5 bg-primary/15 text-primary border border-primary/30 rounded-lg text-xs font-bold flex items-center gap-1 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                           <Icon name="Play" size={11} />
                           Играть
-                        </button>
+                        </span>
                       </div>
                     </div>
-                  </article>
+                  </Link>
                 ))}
               </div>
             )}

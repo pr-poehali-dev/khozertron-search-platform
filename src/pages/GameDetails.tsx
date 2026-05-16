@@ -1,378 +1,281 @@
-import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import Header from "@/components/hozertron/Header";
+import { useEffect, useState } from "react";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import Icon from "@/components/ui/icon";
-import {
-  Theme,
-  MOCK_RESULTS,
-  GAME_DETAILS,
-  ResultItem,
-} from "@/components/hozertron/types";
 
-export default function GameDetails() {
-  const { id } = useParams();
+const GAMES_URL = "https://functions.poehali.dev/04eb41c6-1108-4979-bdbf-81c98344354e";
+
+type Game = {
+  id: number;
+  steam_appid: number | null;
+  title: string;
+  slug: string;
+  genre: string;
+  platforms: string[];
+  rating: number;
+  year: number;
+  players: string;
+  img: string;
+  description: string;
+  developer: string;
+  publisher: string;
+  price: number;
+  is_free: boolean;
+  is_hot: boolean;
+  tags: string[];
+  screenshots: string[];
+  background: string;
+  website: string;
+  metacritic: number | null;
+  similar: Array<{ id: number; title: string; slug: string; img: string; genre: string; rating: number; year: number }>;
+};
+
+const GameDetails = () => {
+  const { id: slug } = useParams();
   const navigate = useNavigate();
-  const gameId = Number(id);
-  const game = MOCK_RESULTS.find((r) => r.id === gameId && r.type === "game");
-  const details = GAME_DETAILS[gameId];
+  const [game, setGame] = useState<Game | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeShot, setActiveShot] = useState<string | null>(null);
 
-  const [theme, setTheme] = useState<Theme>("dark");
-  const [showProfile, setShowProfile] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showService, setShowService] = useState(false);
-  const [activeScreenshot, setActiveScreenshot] = useState(0);
-  const [saved, setSaved] = useState(false);
+  useEffect(() => {
+    if (!slug) return;
+    setLoading(true);
+    fetch(`${GAMES_URL}?slug=${encodeURIComponent(slug)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        setGame(d.game || null);
+        setActiveShot(d.game?.screenshots?.[0] || d.game?.background || d.game?.img || null);
+      })
+      .catch(() => setGame(null))
+      .finally(() => setLoading(false));
+  }, [slug]);
 
-  const applyTheme = (t: Theme) => {
-    setTheme(t);
-    const root = document.documentElement;
-    root.classList.remove("dark", "system");
-    if (t === "dark") root.classList.add("dark");
-    if (t === "system") root.classList.add("system");
-  };
-
-  const closeAll = () => {
-    setShowProfile(false);
-    setShowNotifications(false);
-    setShowService(false);
-  };
-
-  if (!game || !details) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8">
-        <Icon name="Gamepad2" size={48} fallback="Circle" />
-        <p className="mt-4 text-lg font-semibold" style={{ color: "hsl(var(--foreground))" }}>
-          Игра не найдена
-        </p>
-        <button
-          onClick={() => navigate("/search")}
-          className="mt-4 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:scale-105"
-          style={{ background: "hsl(var(--accent))", color: "hsl(var(--accent-foreground))" }}
-        >
-          К результатам
-        </button>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Icon name="Loader2" size={32} className="animate-spin text-primary" />
       </div>
     );
   }
 
-  const similar = details.similar
-    .map((sid) => MOCK_RESULTS.find((r) => r.id === sid))
-    .filter(Boolean) as ResultItem[];
+  if (!game) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+        <Icon name="SearchX" size={48} className="text-muted-foreground mb-3" />
+        <div className="text-xl font-bold mb-2">Игра не найдена</div>
+        <Link to="/" className="text-primary hover:underline">← Вернуться на главную</Link>
+      </div>
+    );
+  }
+
+  const steamUrl = game.steam_appid ? `steam://run/${game.steam_appid}` : null;
+  const steamStoreUrl = game.steam_appid
+    ? `https://store.steampowered.com/app/${game.steam_appid}/`
+    : game.website;
 
   return (
-    <div
-      className="min-h-screen bg-background relative overflow-x-hidden"
-      onClick={closeAll}
-    >
-      {/* Фоновый декор */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div
-          className="absolute -top-32 -left-32 w-96 h-96 rounded-full opacity-10"
-          style={{ background: `radial-gradient(circle, hsl(${game.color}), transparent 70%)` }}
-        />
-        <div
-          className="absolute -bottom-48 -right-24 w-[500px] h-[500px] rounded-full opacity-10"
-          style={{ background: `radial-gradient(circle, hsl(${game.color}), transparent 70%)` }}
-        />
-      </div>
+    <div className="min-h-screen bg-background text-foreground relative">
+      <div className="fixed inset-0 grid-bg opacity-20 pointer-events-none" />
 
-      <Header
-        theme={theme}
-        applyTheme={applyTheme}
-        showProfile={showProfile}
-        setShowProfile={setShowProfile}
-        showNotifications={showNotifications}
-        setShowNotifications={setShowNotifications}
-        showService={showService}
-        setShowService={setShowService}
-        closeAll={closeAll}
-      />
+      {(game.background || game.img) && (
+        <div className="fixed inset-0 pointer-events-none">
+          <img src={game.background || game.img} alt="" className="w-full h-full object-cover opacity-30" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/85 to-background" />
+        </div>
+      )}
 
-      <main className="relative z-10 px-4 md:px-8 pb-16">
-
-        {/* Кнопка назад */}
-        <div className="max-w-5xl mx-auto mb-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium transition-all hover:scale-105 warm-shadow"
-            style={{ background: "hsl(var(--card))", color: "hsl(var(--foreground))" }}
-          >
-            <Icon name="ArrowLeft" size={15} fallback="ChevronLeft" />
+      <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/80 border-b border-border">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-red-700 flex items-center justify-center neon-glow">
+              <Icon name="Gamepad2" size={20} className="text-white" />
+            </div>
+            <div>
+              <div className="font-black tracking-wider">ARENA</div>
+              <div className="text-[9px] uppercase tracking-[0.25em] text-primary">find your game</div>
+            </div>
+          </Link>
+          <button onClick={() => navigate(-1)} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary hover:bg-secondary/70 text-sm">
+            <Icon name="ArrowLeft" size={14} />
             Назад
           </button>
         </div>
+      </header>
 
-        <div className="max-w-5xl mx-auto animate-fade-in">
+      <main className="relative z-10 max-w-7xl mx-auto px-6 py-8">
+        <div className="text-xs text-muted-foreground mb-4 flex items-center gap-2 flex-wrap">
+          <Link to="/" className="hover:text-primary">Главная</Link>
+          <Icon name="ChevronRight" size={12} />
+          <span>{game.genre}</span>
+          <Icon name="ChevronRight" size={12} />
+          <span className="text-foreground">{game.title}</span>
+        </div>
 
-          {/* Главный скриншот */}
-          <div
-            className="relative h-64 md:h-96 rounded-3xl overflow-hidden warm-shadow-lg mb-3"
-            style={{
-              background: `linear-gradient(135deg, hsl(${details.screenshotColors[activeScreenshot]}) 0%, hsl(${game.color}) 100%)`,
-            }}
-          >
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Icon
-                name={game.icon as string}
-                size={120}
-                fallback="Circle"
-                style={{ color: "rgba(255,255,255,0.25)" } as React.CSSProperties}
-              />
-            </div>
-            {game.badge && (
-              <span
-                className="absolute top-4 right-4 px-3 py-1 rounded-xl text-sm font-bold warm-shadow"
-                style={{ background: "hsl(var(--accent))", color: "hsl(var(--accent-foreground))" }}
-              >
-                {game.badge}
-              </span>
-            )}
-            <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6"
-              style={{ background: "linear-gradient(transparent, rgba(0,0,0,0.6))" }}>
-              <p className="text-white/70 text-sm font-medium mb-1">{details.genre}</p>
-              <h1 className="text-2xl md:text-4xl font-black text-white leading-tight">
-                {game.title}
-              </h1>
-            </div>
-          </div>
-
-          {/* Превью скриншотов */}
-          <div className="grid grid-cols-4 gap-2 mb-6">
-            {details.screenshotColors.map((c, idx) => (
-              <button
-                key={idx}
-                onClick={() => setActiveScreenshot(idx)}
-                className="h-16 md:h-20 rounded-xl overflow-hidden transition-all hover:scale-105"
-                style={{
-                  background: `linear-gradient(135deg, hsl(${c}) 0%, hsl(${game.color}) 100%)`,
-                  outline: activeScreenshot === idx ? "3px solid hsl(var(--accent))" : "none",
-                  outlineOffset: "2px",
-                }}
-              >
+        <div className="grid lg:grid-cols-[1fr_360px] gap-8 mb-12">
+          <div>
+            <div className="aspect-video rounded-2xl overflow-hidden border border-border bg-card mb-4 relative">
+              {activeShot ? (
+                <img src={activeShot} alt="" className="w-full h-full object-cover" />
+              ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <Icon
-                    name={game.icon as string}
-                    size={20}
-                    fallback="Circle"
-                    style={{ color: "rgba(255,255,255,0.4)" } as React.CSSProperties}
-                  />
+                  <Icon name="ImageOff" size={48} className="text-muted-foreground" />
                 </div>
-              </button>
-            ))}
-          </div>
-
-          {/* Кнопки действий + рейтинг */}
-          <div className="flex flex-wrap items-center gap-3 mb-6">
-            <button
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-105 hover:brightness-110 warm-shadow"
-              style={{ background: "hsl(var(--accent))", color: "hsl(var(--accent-foreground))" }}
-            >
-              <Icon name="Play" size={15} fallback="Circle" />
-              Играть сейчас
-            </button>
-            <button
-              onClick={() => setSaved(!saved)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-105 warm-shadow"
-              style={{
-                background: saved ? "hsl(var(--accent))" : "hsl(var(--card))",
-                color: saved ? "hsl(var(--accent-foreground))" : "hsl(var(--foreground))",
-              }}
-            >
-              <Icon name={saved ? "BookmarkCheck" : "Bookmark"} size={15} fallback="Bookmark" />
-              {saved ? "Сохранено" : "Сохранить"}
-            </button>
-            <button
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-105 warm-shadow"
-              style={{ background: "hsl(var(--card))", color: "hsl(var(--foreground))" }}
-            >
-              <Icon name="Share2" size={15} fallback="Share" />
-              Поделиться
-            </button>
-
-            {game.rating && (
-              <div
-                className="ml-auto flex items-center gap-2 px-4 py-2.5 rounded-xl warm-shadow"
-                style={{ background: "hsl(var(--card))" }}
-              >
-                <Icon name="Star" size={16} fallback="Circle" style={{ color: "hsl(var(--accent))" } as React.CSSProperties} />
-                <span className="text-lg font-black" style={{ color: "hsl(var(--accent))" }}>{game.rating}</span>
-                <span className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>/ 10</span>
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Описание */}
-            <div className="md:col-span-2 space-y-6">
-              <div
-                className="p-5 rounded-2xl warm-shadow border"
-                style={{ background: "hsl(var(--card))", borderColor: "hsl(var(--border))" }}
-              >
-                <h2 className="text-lg font-bold mb-3" style={{ color: "hsl(var(--foreground))" }}>
-                  Об игре
-                </h2>
-                <p className="text-sm leading-relaxed" style={{ color: "hsl(var(--muted-foreground))" }}>
-                  {details.longDescription}
-                </p>
-              </div>
-
-              {/* Теги */}
-              <div
-                className="p-5 rounded-2xl warm-shadow border"
-                style={{ background: "hsl(var(--card))", borderColor: "hsl(var(--border))" }}
-              >
-                <h2 className="text-lg font-bold mb-3" style={{ color: "hsl(var(--foreground))" }}>
-                  Теги
-                </h2>
-                <div className="flex flex-wrap gap-2">
-                  {details.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium"
-                      style={{ background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }}
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Статистика */}
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { icon: "Users", label: "Игроки", value: details.stats.players },
-                  { icon: "ThumbsUp", label: "Отзывы", value: details.stats.reviews },
-                  { icon: "Clock", label: "В среднем", value: details.stats.playtime },
-                ].map((s) => (
-                  <div
-                    key={s.label}
-                    className="p-3 rounded-2xl text-center warm-shadow border"
-                    style={{ background: "hsl(var(--card))", borderColor: "hsl(var(--border))" }}
-                  >
-                    <Icon name={s.icon as string} size={18} fallback="Circle" style={{ color: "hsl(var(--accent))" } as React.CSSProperties} />
-                    <p className="text-xs mt-2" style={{ color: "hsl(var(--muted-foreground))" }}>{s.label}</p>
-                    <p className="text-sm font-bold mt-0.5" style={{ color: "hsl(var(--foreground))" }}>{s.value}</p>
-                  </div>
-                ))}
+              )}
+              <div className="absolute top-3 left-3 flex gap-2">
+                {game.is_hot && (
+                  <span className="px-2.5 py-1 rounded bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 neon-glow">
+                    <Icon name="Flame" size={11} /> Hot
+                  </span>
+                )}
+                {game.is_free && (
+                  <span className="px-2.5 py-1 rounded bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-widest">Free to play</span>
+                )}
               </div>
             </div>
 
-            {/* Боковая инфо-панель */}
-            <div className="space-y-3">
-              <div
-                className="p-5 rounded-2xl warm-shadow border"
-                style={{ background: "hsl(var(--card))", borderColor: "hsl(var(--border))" }}
-              >
-                <h2 className="text-sm font-bold mb-3 uppercase tracking-wider" style={{ color: "hsl(var(--muted-foreground))" }}>
-                  Информация
-                </h2>
-                <div className="space-y-3 text-sm">
-                  <InfoRow icon="Code2" label="Разработчик" value={details.developer} />
-                  <InfoRow icon="Building" label="Издатель" value={details.publisher} />
-                  <InfoRow icon="Calendar" label="Релиз" value={details.releaseDate} />
-                  <InfoRow icon="Tag" label="Жанр" value={details.genre} />
-                </div>
-              </div>
-
-              <div
-                className="p-5 rounded-2xl warm-shadow border"
-                style={{ background: "hsl(var(--card))", borderColor: "hsl(var(--border))" }}
-              >
-                <h2 className="text-sm font-bold mb-3 uppercase tracking-wider" style={{ color: "hsl(var(--muted-foreground))" }}>
-                  Платформы
-                </h2>
-                <div className="flex flex-wrap gap-2">
-                  {details.platforms.map((p) => (
-                    <span
-                      key={p}
-                      className="px-2.5 py-1 rounded-lg text-xs font-semibold"
-                      style={{ background: "hsl(var(--accent) / 0.15)", color: "hsl(var(--accent))" }}
-                    >
-                      {p}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Похожие игры */}
-          {similar.length > 0 && (
-            <div className="mt-10">
-              <div className="flex items-center gap-2 mb-4">
-                <div
-                  className="w-7 h-7 rounded-lg flex items-center justify-center"
-                  style={{ background: "hsl(var(--accent) / 0.15)" }}
-                >
-                  <Icon name="Sparkles" size={15} fallback="Circle" style={{ color: "hsl(var(--accent))" } as React.CSSProperties} />
-                </div>
-                <h2 className="text-base font-bold" style={{ color: "hsl(var(--foreground))" }}>
-                  Похожие игры
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {similar.map((item) => (
+            {game.screenshots.length > 0 && (
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                {game.screenshots.slice(0, 10).map((s) => (
                   <button
-                    key={item.id}
-                    onClick={() => navigate(`/game/${item.id}`)}
-                    className="text-left rounded-2xl border overflow-hidden warm-shadow transition-all duration-200 hover:scale-[1.02] hover:warm-shadow-lg"
-                    style={{ background: "hsl(var(--card))", borderColor: "hsl(var(--border))" }}
+                    key={s}
+                    onClick={() => setActiveShot(s)}
+                    className={`aspect-video rounded-lg overflow-hidden border-2 transition-all ${activeShot === s ? "border-primary neon-glow" : "border-border hover:border-primary/50"}`}
                   >
-                    <div
-                      className="h-28 flex items-center justify-center relative"
-                      style={{ background: `hsl(${item.color} / 0.12)` }}
-                    >
-                      <Icon
-                        name={item.icon as string}
-                        size={40}
-                        fallback="Circle"
-                        style={{ color: `hsl(${item.color})`, opacity: 0.6 } as React.CSSProperties}
-                      />
-                      {item.badge && (
-                        <span
-                          className="absolute top-2 right-2 px-2 py-0.5 rounded-lg text-xs font-bold"
-                          style={{ background: "hsl(var(--accent))", color: "hsl(var(--accent-foreground))" }}
-                        >
-                          {item.badge}
-                        </span>
-                      )}
-                    </div>
-                    <div className="p-3">
-                      <p className="font-semibold text-sm leading-snug" style={{ color: "hsl(var(--foreground))" }}>
-                        {item.title}
-                      </p>
-                      <p className="text-xs mt-1 line-clamp-2" style={{ color: "hsl(var(--muted-foreground))" }}>
-                        {item.description}
-                      </p>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>{item.meta}</span>
-                        {item.rating && (
-                          <div className="flex items-center gap-1">
-                            <Icon name="Star" size={11} fallback="Circle" style={{ color: "hsl(var(--accent))" } as React.CSSProperties} />
-                            <span className="text-xs font-bold" style={{ color: "hsl(var(--accent))" }}>{item.rating}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                    <img src={s} alt="" className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
+            )}
+          </div>
+
+          <aside className="space-y-4">
+            <div>
+              <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-primary mb-2">
+                {game.genre} · {game.year}
+              </div>
+              <h1 className="text-3xl md:text-4xl font-black mb-3 neon-text">{game.title}</h1>
+              {game.developer && (
+                <div className="text-sm text-muted-foreground">
+                  Разработчик: <span className="text-foreground font-semibold">{game.developer}</span>
+                </div>
+              )}
+              {game.publisher && (
+                <div className="text-sm text-muted-foreground">
+                  Издатель: <span className="text-foreground font-semibold">{game.publisher}</span>
+                </div>
+              )}
             </div>
-          )}
+
+            <div className="bg-card/80 backdrop-blur-xl border border-border rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs uppercase tracking-widest text-muted-foreground">Рейтинг</div>
+                  <div className="flex items-center gap-1 mt-1">
+                    <Icon name="Star" size={16} className="text-primary fill-primary" />
+                    <span className="text-xl font-black">{Number(game.rating).toFixed(1)}</span>
+                  </div>
+                </div>
+                {game.metacritic && (
+                  <div>
+                    <div className="text-xs uppercase tracking-widest text-muted-foreground">Metacritic</div>
+                    <div className="text-xl font-black text-emerald-400 mt-1">{game.metacritic}</div>
+                  </div>
+                )}
+                <div>
+                  <div className="text-xs uppercase tracking-widest text-muted-foreground">Игроков</div>
+                  <div className="text-xl font-black mt-1">{game.players}</div>
+                </div>
+              </div>
+
+              <div className="flex gap-1.5 flex-wrap">
+                {game.platforms.map((p) => (
+                  <span key={p} className="px-2 py-1 rounded bg-secondary text-[10px] uppercase tracking-wider font-semibold">{p}</span>
+                ))}
+              </div>
+
+              <div className="pt-3 border-t border-border">
+                <div className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Цена</div>
+                <div className="text-2xl font-black">
+                  {game.is_free ? <span className="text-emerald-400">Бесплатно</span> : `${game.price.toLocaleString("ru")} ₽`}
+                </div>
+              </div>
+
+              {steamUrl && (
+                <a
+                  href={steamUrl}
+                  className="block w-full text-center py-3 bg-primary text-primary-foreground rounded-lg font-bold text-sm uppercase tracking-widest neon-glow hover:scale-[1.02] transition-transform"
+                >
+                  <Icon name="Play" size={14} className="inline mr-1.5 -mt-0.5" />
+                  Запустить в Steam
+                </a>
+              )}
+              {steamStoreUrl && (
+                <a
+                  href={steamStoreUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-secondary hover:bg-secondary/70 rounded-lg text-sm font-semibold"
+                >
+                  <Icon name="ExternalLink" size={14} />
+                  Открыть в магазине Steam
+                </a>
+              )}
+              <button className="flex items-center justify-center gap-2 w-full py-2.5 border border-border rounded-lg text-sm font-semibold hover:border-primary hover:text-primary transition-colors">
+                <Icon name="Heart" size={14} />
+                В избранное
+              </button>
+            </div>
+
+            {game.tags.length > 0 && (
+              <div className="bg-card/60 border border-border rounded-2xl p-5">
+                <div className="text-xs uppercase tracking-widest text-primary font-bold mb-3">Теги</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {game.tags.map((t) => (
+                    <span key={t} className="px-2.5 py-1 rounded-full bg-secondary text-xs">#{t}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </aside>
         </div>
+
+        {game.description && (
+          <section className="mb-12 max-w-4xl">
+            <h2 className="text-xs uppercase tracking-widest text-primary font-bold mb-3">Об игре</h2>
+            <p className="text-base text-foreground/90 leading-relaxed whitespace-pre-line">{game.description}</p>
+          </section>
+        )}
+
+        {game.similar.length > 0 && (
+          <section className="mb-12">
+            <h2 className="text-xs uppercase tracking-widest text-primary font-bold mb-4">Похожие игры</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {game.similar.map((s) => (
+                <Link
+                  key={s.id}
+                  to={`/game/${s.slug}`}
+                  className="group bg-card/60 border border-border rounded-xl overflow-hidden hover:border-primary/60 transition-all"
+                >
+                  <div className="aspect-video overflow-hidden">
+                    <img src={s.img} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  </div>
+                  <div className="p-3">
+                    <div className="font-semibold text-sm truncate">{s.title}</div>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
+                      <span className="text-primary">{s.genre}</span>
+                      <span className="flex items-center gap-1">
+                        <Icon name="Star" size={10} className="fill-primary text-primary" />
+                        {Number(s.rating).toFixed(1)}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );
-}
+};
 
-function InfoRow({ icon, label, value }: { icon: string; label: string; value: string }) {
-  return (
-    <div className="flex items-start gap-3">
-      <Icon name={icon} size={15} fallback="Circle" style={{ color: "hsl(var(--muted-foreground))" } as React.CSSProperties} />
-      <div className="flex-1">
-        <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>{label}</p>
-        <p className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>{value}</p>
-      </div>
-    </div>
-  );
-}
+export default GameDetails;

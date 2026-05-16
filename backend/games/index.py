@@ -49,6 +49,29 @@ def handler(event: dict, context) -> dict:
                 rows = cur.fetchall()
                 return {'statusCode': 200, 'headers': _cors(), 'body': json.dumps({'genres': [r['genre'] for r in rows]})}
 
+            slug = (params.get('slug') or '').strip()
+            if slug:
+                cur.execute(f"SELECT * FROM games WHERE slug = '{_esc(slug)}' LIMIT 1")
+                row = cur.fetchone()
+                if not row:
+                    return {'statusCode': 404, 'headers': _cors(), 'body': json.dumps({'error': 'Not found'})}
+                d = dict(row)
+                d['platforms'] = [p.strip() for p in (d.get('platforms') or '').split(',') if p.strip()]
+                d['tags'] = [t.strip() for t in (d.get('tags') or '').split(',') if t.strip()]
+                d['screenshots'] = [s.strip() for s in (d.get('screenshots') or '').split('|') if s.strip()]
+                d['rating'] = float(d['rating']) if d.get('rating') is not None else 0
+                d['price'] = float(d['price']) if d.get('price') is not None else 0
+
+                similar_genre = d.get('genre') or ''
+                cur.execute(f"SELECT id, title, slug, img, genre, rating, year FROM games WHERE genre = '{_esc(similar_genre)}' AND id != {d['id']} ORDER BY rating DESC LIMIT 6")
+                similar = []
+                for s in cur.fetchall():
+                    sd = dict(s)
+                    sd['rating'] = float(sd['rating']) if sd.get('rating') is not None else 0
+                    similar.append(sd)
+                d['similar'] = similar
+                return {'statusCode': 200, 'headers': _cors(), 'body': json.dumps({'game': d}, default=str)}
+
             q = (params.get('q') or '').strip()
             genre = (params.get('genre') or '').strip()
             platform = (params.get('platform') or '').strip()
