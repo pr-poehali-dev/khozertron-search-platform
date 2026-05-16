@@ -16,7 +16,7 @@ export default function GameDetails() {
   const game = MOCK_RESULTS.find((r) => r.id === gameId && r.type === "game");
   const details = GAME_DETAILS[gameId];
 
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>("dark");
   const [showProfile, setShowProfile] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showService, setShowService] = useState(false);

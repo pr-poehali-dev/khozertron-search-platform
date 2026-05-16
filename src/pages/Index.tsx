@@ -11,7 +11,7 @@ export default function Index() {
   const [searchMode, setSearchMode] = useState<SearchMode>("text");
   const [contentType, setContentType] = useState<ContentType>("all");
   const [dateFilter, setDateFilter] = useState<DateFilter>("any");
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>("dark");
   const [isListening, setIsListening] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showProfile, setShowProfile] = useState(false);

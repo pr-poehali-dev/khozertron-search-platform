@@ -32,7 +32,7 @@ export default function Search() {
   const query = searchParams.get("q") || "";
   const activeType = (searchParams.get("type") as ContentType) || "all";
 
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>("dark");
   const [showProfile, setShowProfile] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showService, setShowService] = useState(false);
