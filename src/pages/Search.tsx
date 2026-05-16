@@ -162,7 +162,13 @@ export default function Search() {
           {games.length > 0 && (
             <Section title="Игры" icon="Gamepad2">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {games.map((item) => <GameCard key={item.id} item={item} />)}
+                {games.map((item) => (
+                  <GameCard
+                    key={item.id}
+                    item={item}
+                    onClick={() => navigate(`/game/${item.id}`)}
+                  />
+                ))}
               </div>
             </Section>
           )}
@@ -230,9 +236,10 @@ function Section({ title, icon, children }: { title: string; icon: string; child
   );
 }
 
-function GameCard({ item }: { item: ResultItem }) {
+function GameCard({ item, onClick }: { item: ResultItem; onClick?: () => void }) {
   return (
     <div
+      onClick={onClick}
       className="rounded-2xl border overflow-hidden warm-shadow transition-all duration-200 hover:scale-[1.02] hover:warm-shadow-lg cursor-pointer"
       style={{ background: "hsl(var(--card))", borderColor: "hsl(var(--border))" }}
     >

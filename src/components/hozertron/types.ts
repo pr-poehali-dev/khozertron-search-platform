@@ -45,6 +45,61 @@ export interface ResultItem {
   icon: string;
 }
 
+export interface GameDetails {
+  longDescription: string;
+  developer: string;
+  publisher: string;
+  releaseDate: string;
+  genre: string;
+  platforms: string[];
+  tags: string[];
+  screenshotColors: string[];
+  stats: { players: string; reviews: string; playtime: string };
+  similar: number[];
+}
+
+export const GAME_DETAILS: Record<number, GameDetails> = {
+  1: {
+    longDescription:
+      "Shadow of the Erdtree — крупнейшее дополнение в истории FromSoftware. Откройте Земли Теней — таинственное измерение, скрытое за древом Эрд. Сражайтесь с легендарными полубогами, исследуйте величественные руины и раскройте судьбу Микеллы Безупречного. Дополнение приносит более 100 часов нового контента, десятки новых видов оружия и заклинаний.",
+    developer: "FromSoftware",
+    publisher: "Bandai Namco",
+    releaseDate: "21 июня 2024",
+    genre: "Souls-like RPG",
+    platforms: ["PC", "PS5", "PS4", "Xbox Series X|S"],
+    tags: ["Открытый мир", "Сложная", "Тёмное фэнтези", "Кооператив", "PvP"],
+    screenshotColors: ["28 60% 35%", "22 50% 40%", "30 55% 45%", "25 45% 30%"],
+    stats: { players: "1.2M онлайн", reviews: "94% положит.", playtime: "~120 часов" },
+    similar: [2, 3],
+  },
+  2: {
+    longDescription:
+      "Hollow Knight: Silksong — продолжение культовой метроидвании от Team Cherry. Управляйте Хорнет в её путешествии по королевству Фарлум — миру шёлка, песнопений и забытых королей. Более 150 врагов, ремесло, новые способы передвижения и атмосферный саундтрек Кристофера Ларкина.",
+    developer: "Team Cherry",
+    publisher: "Team Cherry",
+    releaseDate: "2025",
+    genre: "Метроидвания",
+    platforms: ["PC", "Switch", "PS5", "Xbox Series X|S"],
+    tags: ["Платформер", "Атмосферная", "Ручная анимация", "2D", "Сложная"],
+    screenshotColors: ["210 30% 35%", "260 25% 40%", "200 35% 30%", "180 30% 45%"],
+    stats: { players: "850K ожидают", reviews: "Не вышла", playtime: "~50 часов" },
+    similar: [1, 3],
+  },
+  3: {
+    longDescription:
+      "Hades II — второй раз вырвитесь из подземного мира, но теперь в роли Мелинои, бессмертной принцессы. Сражайтесь со всеми силами Олимпа и Хаоса, освойте мощную магию и встретьте новых богов в стильном изометрическом рогалике от создателей Hades.",
+    developer: "Supergiant Games",
+    publisher: "Supergiant Games",
+    releaseDate: "В раннем доступе с 2024",
+    genre: "Roguelike",
+    platforms: ["PC"],
+    tags: ["Изометрия", "Мифология", "Реиграбельность", "Сюжетная", "Боёвка"],
+    screenshotColors: ["320 40% 35%", "280 35% 40%", "340 45% 30%", "300 30% 45%"],
+    stats: { players: "320K онлайн", reviews: "97% положит.", playtime: "~80 часов" },
+    similar: [1, 2],
+  },
+};
+
 export const MOCK_RESULTS: ResultItem[] = [
   {
     id: 1,
